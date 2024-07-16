@@ -41,7 +41,7 @@ async function run() {
         app.get('/', (req, res)=> {
             res.send("running")
         })
-        // jwt related api
+        // jwt related api 
         app.post('/jwt', async (req, res) => {
             const user = req.body;
             const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '10h' });
@@ -66,17 +66,40 @@ async function run() {
         app.get('/users', async (req, res) => {
             const phone = req.query.phone;
             const password = req.query.password
-            
+            console.log(phone,password);
             const query = { phone: phone };
-            
+            if (phone === undefined || password === undefined) {
+                res.send({message:"Invalid input", status:401})
+             }
             const result = await userCollection.findOne(query);
-            
-            const passwordMatch = await bcrypt.compare(password, result.password);
-            console.log(passwordMatch);
+           
+            if (result==null) {
+                res.send({ message: "Invalid input", status: 401 })
+            }
+            else {
+                const passwordMatch = await bcrypt.compare(password, result.password);
+
+                console.log(passwordMatch);
+                 
             if (!passwordMatch) {res.send({message:"Invalid user",status:401})}
             else { res.send({ ...result, status:200}); } 
+            }
+            
+           
         });
+        //logout api
 
+        app.get('/logout', (req, res) => {
+            // 1. Check if user is authenticated (optional)
+            // ... (authentication logic)
+
+            // 2. Invalidate user session or token
+            // req.session.destroy();
+            // Example for session-based authentication
+
+            // 3. Send a logout confirmation response
+            res.json({ message: 'Successfully logged out!',status:200 });
+        });
     } finally {
         // Ensures that the client will close when you finish/error
         // await client.close(); 
