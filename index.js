@@ -53,25 +53,28 @@ async function run() {
             const newUser = await req.body;
             const exist = await userCollection.findOne({ phone: newUser.phone });
             if (exist) {
-                res.send({ message: 'user exist' })
-            }
-            const hash = bcrypt.hashSync(newUser.password, 14);
+                res.send({ message: 'user exist',status:404 })
+                console.log("exist");
+            } else {
+                 const hash = bcrypt.hashSync(newUser.password, 14);
             const response = userCollection.insertOne({ ...newUser, password: hash });
-            res.send({ message: 'user created', status: 200 })
+            res.send({ message: 'user created', status: 200 }) 
+            }
+          
         })
         //get single user
         app.get('/users', async (req, res) => {
             const phone = req.query.phone;
             const password = req.query.password
-            console.log(phone,password);
-
-            const query = { phone: phone };
-            const result = await userCollection.findOne(query);
-            const passwordMatch = bcrypt.compareSync(password, result.password);
-            console.log(passwordMatch);
-            if (!passwordMatch) res.send({message:"Invalid user",status:401})
             
-            res.send(result,{status:200});
+            const query = { phone: phone };
+            
+            const result = await userCollection.findOne(query);
+            
+            const passwordMatch = await bcrypt.compare(password, result.password);
+            console.log(passwordMatch);
+            if (!passwordMatch) {res.send({message:"Invalid user",status:401})}
+            else { res.send({ ...result, status:200}); } 
         });
 
     } finally {
