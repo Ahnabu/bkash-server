@@ -48,7 +48,9 @@ async function run() {
             res.send({ token });
         })
 
+        //post user
         app.post('/users', async (req, res) => {
+            const newUser = await req.body;
             const exist = await userCollection.findOne({ phone: newUser.phone });
             if (exist) {
                 res.send({ message: 'user exist' })
@@ -56,7 +58,21 @@ async function run() {
             const hash = bcrypt.hashSync(newUser.password, 14);
             const response = userCollection.insertOne({ ...newUser, password: hash });
             res.send({ message: 'user created', status: 200 })
-       })
+        })
+        //get single user
+        app.get('/users', async (req, res) => {
+            const phone = req.query.phone;
+            const password = req.query.password
+            console.log(phone,password);
+
+            const query = { phone: phone };
+            const result = await userCollection.findOne(query);
+            const passwordMatch = bcrypt.compareSync(password, result.password);
+            console.log(passwordMatch);
+            if (!passwordMatch) res.send({message:"Invalid user",status:401})
+            
+            res.send(result,{status:200});
+        });
 
     } finally {
         // Ensures that the client will close when you finish/error
