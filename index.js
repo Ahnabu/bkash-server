@@ -48,6 +48,21 @@ async function run() {
             res.send({ token });
         })
 
+        //middleware
+        const verifyToken = (req, res, next) => {
+            // console.log('inside verify token', req.headers.authorization);
+            if (!req.headers.authorization) {
+                return res.status(401).send({ message: 'unauthorized access' });
+            }
+            const token = req.headers.authorization.split(' ')[1];
+            jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, decoded) => {
+                if (err) {
+                    return res.status(401).send({ message: 'unauthorized access' })
+                }
+                req.decoded = decoded;
+                next();
+            })
+        }
         //post user
         app.post('/users', async (req, res) => {
             const newUser = await req.body;
@@ -62,7 +77,7 @@ async function run() {
             }
           
         })
-        //get single user
+        //get single user data
         app.get('/users', async (req, res) => {
             const phone = req.query.phone;
             const password = req.query.password
@@ -87,6 +102,15 @@ async function run() {
             
            
         });
+        //get user by phone
+        app.get('/users/:phone', verifyToken, async (req, res) => {
+            const phone = req.params.phone;
+
+            const query = { phone: phone };
+            const result = await userCollection.findOne(query);
+            res.send(result);
+        });
+
         //logout api
 
         app.get('/logout', (req, res) => {
